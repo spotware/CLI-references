@@ -570,7 +570,7 @@ ctrader-cli backtest --ctid=<cTID> --pwd-file=<path-to-pwd-file> --account=<acco
 | `--precise-conversion` | Download real historical exchange rates for accurate profit/margin conversion. |
 | `--CustomParameter=<value>` | Set any cBot parameter by name (repeat per parameter). |
 
-### `optimize`
+### `optimize`(available in cTrader CLI 5.10)
 
 Sweep cBot parameter values. Uses `--timeframe` instead of `--period`. Local edition only.
 
