@@ -693,6 +693,10 @@ Commands `accounts`, `symbols`, `metadata`, `run`, `backtest` exist in both mode
 
 `--volume` defaults to units of the base currency. Pass `--volume-type=lots` to interpret it as lots.
 
+### Take-profit semantics
+
+`--tp` takes a single price. A position has one take-profit level and closes in full when price reaches it, so `--tp` on `position modify` replaces the existing level rather than adding another.
+
 ### Confirmation flags
 
 `--yes`/`-y` skips confirmation prompts. `--all` targets every applicable entity (`stop`, `order cancel`, `position close`, `alert delete`). Both also work as the last positional argument inside the interactive shell (`> position close all yes`).
