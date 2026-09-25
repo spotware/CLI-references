@@ -709,6 +709,14 @@ A pending order placed with `order place-limit`, `order place-stop` or `order pl
 
 `--limit-range` is the slippage allowance applied once the stop price of an `order place-stop-limit` order fires. It belongs to stop-limit orders only; `order place-market` takes no range flag.
 
+### Stop-order trigger semantics
+
+`order place-stop` and `order place-stop-limit` take their trigger level through `--stop-price`. That price is the whole of the trigger definition for both commands.
+
+### Order and position identification
+
+Orders and positions are referenced by the numeric identifiers passed to `--order` and `--position`. No order or position command accepts a comment or label field.
+
 ### Confirmation flags
 
 `--yes`/`-y` skips confirmation prompts. `--all` targets every applicable entity (`stop`, `order cancel`, `position close`, `alert delete`). Both also work as the last positional argument inside the interactive shell (`> position close all yes`).
