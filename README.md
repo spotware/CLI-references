@@ -695,7 +695,19 @@ Commands `accounts`, `symbols`, `metadata`, `run`, `backtest` exist in both mode
 
 ### Take-profit semantics
 
-`--tp` takes a single price. A position has one take-profit level and closes in full when price reaches it, so `--tp` on `position modify` replaces the existing level rather than adding another.
+`--tp` takes a single price, so a position opened through cTrader CLI has one take-profit level and closes in full when price reaches it. `--tp` on `position modify` replaces that level rather than adding another. Positions opened in the cTrader desktop or web applications can carry several take-profit levels, which cTrader CLI cannot create or reproduce. The effect of `position modify --tp` on a position that already carries several take-profit levels is not documented here.
+
+### Stop-loss semantics
+
+`--sl` takes a single fixed price. A stop loss stays at that price until a later `position modify --sl` moves it, so trailing a stop or bringing it to break-even means issuing each new price explicitly. Trailing stop loss and break-even protection are not part of `--sl` itself.
+
+### Pending order lifetime
+
+A pending order placed with `order place-limit`, `order place-stop` or `order place-stop-limit` stays active until it fills or `order cancel` cancels it.
+
+### Limit-range semantics
+
+`--limit-range` is the slippage allowance applied once the stop price of an `order place-stop-limit` order fires. It belongs to stop-limit orders only; `order place-market` takes no range flag.
 
 ### Confirmation flags
 
@@ -708,4 +720,3 @@ In batch mode, pass `--<ParameterName>=<value>` directly. From inside the intera
 ### Indicator parameter aliases
 
 `--indicator` and `--name` are aliases. `--params` and `--ind-params` are aliases.
-
