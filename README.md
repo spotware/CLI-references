@@ -721,6 +721,10 @@ Orders and positions are referenced by the numeric identifiers passed to `--orde
 
 `--yes`/`-y` skips confirmation prompts. `--all` targets every applicable entity (`stop`, `order cancel`, `position close`, `alert delete`). Both also work as the last positional argument inside the interactive shell (`> position close all yes`).
 
+### Unknown flags
+
+cTrader CLI ignores flags it does not recognise. It does not return an error, and the command runs as if the flag were absent. A misspelled flag (`--stoploss` instead of `--sl`) or a flag for an unavailable feature (`--expiry`, `--trailing-stop`, `--label`) is dropped silently, and the order or position is created without that setting.
+
 ### cBot parameter overrides
 
 In batch mode, pass `--<ParameterName>=<value>` directly. From inside the interactive shell, pass `--robot-params=<key=value,key=value>` to the same `run`/`backtest` commands.
