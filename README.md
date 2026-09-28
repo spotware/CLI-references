@@ -723,7 +723,14 @@ Orders and positions are referenced by the numeric identifiers passed to `--orde
 
 ### Unknown flags
 
-cTrader CLI ignores flags it does not recognise. It does not return an error, and the command runs as if the flag were absent. A misspelled flag (`--stoploss` instead of `--sl`) or a flag for an unavailable feature (`--expiry`, `--trailing-stop`, `--label`) is dropped silently, and the order or position is created without that setting.
+| Command | Unknown flag | Exit code | Output |
+|---|---|---|---|
+| `run`, `backtest`, `optimize`, `accounts`, `symbols`, `periods`, `metadata`, `version`, `help` | Rejected | 1 | `Error: Parameter <name> is not allowed` or `Error: Unknown command line parameters found: <name>` |
+| Misspelled cBot parameter on `run` or `backtest` | Rejected | 1 | `Error: Unknown command line parameters found: <name>` |
+| `order`, `position`, `orders`, `positions` with `-q` | Ignored, no warning | 0 | Normal output |
+| `--name=value` inside the interactive shell | Rejected | — | Error |
+
+With `-q`, `--expiration`, `--trigger-method`, `--market-range`, `--label` and `--comment` are dropped, and the order is created without that setting.
 
 ### cBot parameter overrides
 
@@ -732,3 +739,4 @@ In batch mode, pass `--<ParameterName>=<value>` directly. From inside the intera
 ### Indicator parameter aliases
 
 `--indicator` and `--name` are aliases. `--params` and `--ind-params` are aliases.
+
