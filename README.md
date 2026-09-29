@@ -699,7 +699,7 @@ Commands `accounts`, `symbols`, `metadata`, `run`, `backtest` exist in both mode
 
 ### Stop-loss semantics
 
-`--sl` takes a single fixed price. A stop loss stays at that price until a later `position modify --sl` moves it, so trailing a stop or bringing it to break-even means issuing each new price explicitly. Trailing stop loss and break-even protection are not part of `--sl` itself.
+`--sl` takes a single price. A stop loss stays at that price until a later `position modify --sl` moves it, so trailing a stop or bringing it to break-even means issuing each new price explicitly. Trailing stop loss and break-even protection are not part of `--sl` itself.
 
 ### Pending order lifetime
 
