@@ -368,6 +368,14 @@ ctrader-cli position close-partial --ctid=<cTID> --password=<password> --account
 
 Read past trading activity and current exposure.
 
+`deals` and `orders-history` have the following history limits:
+
+- The CLI loads the full `--from` / `--to` range with no length limit.
+- One call returns only the latest 200 deals (`deals`) or the latest 500 orders (`orders-history`) in the range.
+- Without `--from` / `--to`, both commands return only the last 30 days.
+
+If a range holds more records than one call returns, split it into shorter ranges and run the command for each.
+
 ### `deals`
 
 List closed trades in a date range, or the most recent N closed trades. Each record is one closing deal with realised P&L. This is the same data as in the **History** tab in cTrader. Choose one of `--from` and `--to`, which filter the trades by close time, or `--count`. Optionally scope to a single `--symbol`.
@@ -1075,6 +1083,14 @@ ctrader-cli position close-partial --ctid=<cTID> --password=<password> --account
 ## History
 
 Read past trading activity and current exposure.
+
+`deals` and `orders-history` have the following history limits:
+
+- The CLI loads the full `--from` / `--to` range with no length limit.
+- One call returns only the latest 200 deals (`deals`) or the latest 500 orders (`orders-history`) in the range.
+- Without `--from` / `--to`, both commands return only the last 30 days.
+
+If a range holds more records than one call returns, split it into shorter ranges and run the command for each.
 
 ### `deals`
 
