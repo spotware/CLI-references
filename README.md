@@ -382,7 +382,7 @@ Read past trading activity and current exposure.
 
 If a range holds more records than one call returns, split it into shorter ranges and run the command for each. 
 
-To check whether the result was cut, check its output:
+To see whether the result was cut, check its output:
 
 - `orders-history`: the output has `available` and `returned`. If `available` is bigger than `returned`, there are more orders in the range.
 - `deals`: if `count` is exactly `200`, there may be more trades in the range.
