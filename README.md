@@ -381,7 +381,7 @@ If a range holds more records than one call returns, split it into shorter range
 List closed trades in a date range, or the most recent N closed trades. Each record is one closing deal with realised P&L. This is the same data as in the **History** tab in cTrader. Choose one of `--from` and `--to`, which filter the trades by close time, or `--count`. Optionally scope to a single `--symbol`.
 
 > [!NOTE]
-> `deals` returns closed trades only. Opening fills are not included, so a position appears in `deals` only after it is closed. This is not the same as deals in Open API or `get_deals` in Remote MCP, which also return opening fills. To check a market order that has just filled, use `orders-history` (order executions, including the opening fill) or `positions` (open positions).
+> `deals` returns closed trades only and excludes opening fills. A position appears in `deals` after it is closed. [Open API](https://help.ctrader.com/open-api/messages/) deals and [Remote MCP](https://help.ctrader.com/ctrader-ai-agent-connect/remote-mcp/analysis/#deal-history) `get_deals` include both opening and closing deals. For a market order that has just filled, use `orders-history` (order executions, including the opening fill) or `positions` (open positions).
 
 **Auth:** interactive  
 **Required flags:** `--ctid`, `--password`, `--account`, `-q`
@@ -1097,7 +1097,7 @@ If a range holds more records than one call returns, split it into shorter range
 List closed trades in a date range, or the most recent N closed trades. Each record is one closing deal with realised P&L. This is the same data as in the **History** tab in cTrader. Choose one of `--from` and `--to`, which filter the trades by close time, or `--count`. Optionally scope to a single `--symbol`.
 
 > [!NOTE]
-> `deals` returns closed trades only. Opening fills are not included, so a position appears in `deals` only after it is closed. This is not the same as deals in Open API or `get_deals` in Remote MCP, which also return opening fills. To check a market order that has just filled, use `orders-history` (order executions, including the opening fill) or `positions` (open positions).
+> `deals` returns closed trades only and excludes opening fills. A position appears in `deals` after it is closed. [Open API](https://help.ctrader.com/open-api/messages/) deals and [Remote MCP](https://help.ctrader.com/ctrader-ai-agent-connect/remote-mcp/analysis/#deal-history) `get_deals` include both opening and closing deals. For a market order that has just filled, use `orders-history` (order executions, including the opening fill) or `positions` (open positions).
 
 **Auth:** interactive  
 **Required flags:** `--ctid`, `--password`, `--account`, `-q`
