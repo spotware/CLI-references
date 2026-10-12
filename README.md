@@ -696,10 +696,17 @@ Commands `accounts`, `symbols`, `metadata`, `run`, `backtest` exist in both mode
 - **Batch route:** args contain `--pwd-file=<path>` or `--broker=<name>`, or no auth flags at all.
 - **Interactive route:** args contain any of `--password=<value>`, `-q`/`--quick`/`--quit`, `--commands`, `--yes`/`-y`, `--all`, `--order`, `--position`, `--alert`, `--instance`, `--side`, `--volume`, `--volume-type`, `--sl`, `--tp`, `--stop-price`, `--limit-range`, `--indicator`, `--ind-params`, `--symbols`, `--condition`, `--message`, `--from`, `--to`, `--count`.
 
-### Date formats
+### Dates and times
 
-- `--from` and `--to` (used by `candles`, `deals`, `orders-history`): `yyyy-MM-dd` or `dd/MM/yyyy`.
-- Backtest `--start` and `--end` (used by `backtest`, `optimize`): `dd/MM/yyyy [hh:mm]` in UTC.
+All dates and times in cTrader CLI are in UTC. The CLI never uses your machine's local time zone or the broker's server time.
+
+UTC applies to command output and date input as follows:
+
+- Output: every time in the JSON output is UTC in ISO 8601 with `Z`, for example `2026-10-08T14:05:00.000Z`.
+- `--from` and `--to` (used by `candles`, `deals`, `orders-history`): a date only, in `yyyy-MM-dd`, `dd/MM/yyyy`, `dd-MM-yyyy` or `yyyy/MM/dd` format. The date is a calendar day in UTC; `--to` includes the whole day, up to 23:59:59 UTC.
+- Backtest `--start` and `--end` (used by `backtest`, `optimize`): `dd/MM/yyyy [hh:mm]`, also in UTC.
+
+The one exception is a running cBot (`run`, `backtest`). Its time follows the `TimeZone` set in the cBot, as in cTrader Algo.
 
 ### Volume semantics
 
@@ -1412,10 +1419,17 @@ Commands `accounts`, `symbols`, `metadata`, `run`, `backtest` exist in both mode
 - **Batch route:** args contain `--pwd-file=<path>` or `--broker=<name>`, or no auth flags at all.
 - **Interactive route:** args contain any of `--password=<value>`, `-q`/`--quick`/`--quit`, `--commands`, `--yes`/`-y`, `--all`, `--order`, `--position`, `--alert`, `--instance`, `--side`, `--volume`, `--volume-type`, `--sl`, `--tp`, `--stop-price`, `--limit-range`, `--indicator`, `--ind-params`, `--symbols`, `--condition`, `--message`, `--from`, `--to`, `--count`.
 
-### Date formats
+### Dates and times
 
-- `--from` and `--to` (used by `candles`, `deals`, `orders-history`): `yyyy-MM-dd` or `dd/MM/yyyy`.
-- Backtest `--start` and `--end` (used by `backtest`, `optimize`): `dd/MM/yyyy [hh:mm]` in UTC.
+All dates and times in cTrader CLI are in UTC. The CLI never uses your machine's local time zone or the broker's server time.
+
+UTC applies to command output and date input as follows:
+
+- Output: every time in the JSON output is UTC in ISO 8601 with `Z`, for example `2026-10-08T14:05:00.000Z`.
+- `--from` and `--to` (used by `candles`, `deals`, `orders-history`): a date only, in `yyyy-MM-dd`, `dd/MM/yyyy`, `dd-MM-yyyy` or `yyyy/MM/dd` format. The date is a calendar day in UTC; `--to` includes the whole day, up to 23:59:59 UTC.
+- Backtest `--start` and `--end` (used by `backtest`, `optimize`): `dd/MM/yyyy [hh:mm]`, also in UTC.
+
+The one exception is a running cBot (`run`, `backtest`). Its time follows the `TimeZone` set in the cBot, as in cTrader Algo.
 
 ### Volume semantics
 
