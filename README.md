@@ -384,8 +384,16 @@ If a range holds more records than one call returns, split it into shorter range
 
 To see whether the result was cut, check its output:
 
-- `orders-history`: the output has `available` and `returned`. If `available` is bigger than `returned`, there are more orders in the range.
-- `deals`: if `count` is exactly `200`, there may be more trades in the range.
+- With `--from` / `--to`, both commands show `returned` and `available`. If `available` is bigger than `returned`, the output also has `truncated: true` and the following warning:
+
+  ```
+  Showing the last 200 of 374. Use a shorter --from / --to range to see the rest.
+  ```
+
+- Without `--from` / `--to`, both commands show `lookbackDays: 30`. `orders-history` also shows `available` when there are more orders in the 30 days than it returned.
+- A range with no activity returns an empty list with `available: 0`.
+
+If loading the history fails, for example because the connection drops, the command prints an error and exits with a non-zero code.
 
 ### `deals`
 
@@ -414,6 +422,13 @@ List every completed order in a date range, or the most recent N completed order
 ctrader-cli orders-history --ctid=<cTID> --password=<password> --account=<account-id> -q --from=<date> --to=<date>
 ctrader-cli orders-history --ctid=<cTID> --password=<password> --account=<account-id> -q --count=<count>
 ```
+
+**Order times** (also shown by `order <order-id>`), all in UTC:
+
+- `openTime`: when the order was created.
+- `closeTime`: when the order was executed. For an expired order, it is the expiry time. It is empty for a cancelled limit, stop or stop-limit order, which was never executed, and for a pending order.
+- `expiration`: the expiry set on the order, if any.
+- `lastUpdateTime`: when the order last changed. For a cancelled or expired order, it is when the order ended.
 
 ### `exposure`
 
@@ -691,6 +706,53 @@ Print the interactive shell's full command reference. Equivalent to launching th
 ctrader-cli help
 ```
 
+## Positional forms
+
+Inside the interactive shell, commands also accept their values as positional arguments, without option names. For example, `deals EURUSD 20` returns the last 20 closed trades for EURUSD, and `deals 01/06/2025 30/06/2025` returns the closed trades for June 2025.
+
+The positional forms follow these rules:
+
+- Values go in the order shown below. Values in square brackets are optional, but each one requires the values before it.
+- A trailing `yes` skips the confirmation prompt.
+- A command entered without its values asks for them one by one.
+- A list of symbols is separated by commas without spaces, such as `EURUSD,GBPUSD`.
+
+| Command | Positional form | Example |
+|---|---|---|
+| `account` | `account <account-id>` | `account 1234567` |
+| `account switch` | `account switch <account-id>` | `account switch 1234567` |
+| `symbol` | `symbol <symbol>` | `symbol EURUSD` |
+| `sessions` | `sessions <symbol>` | `sessions XAUUSD` |
+| `price` | `price <symbol>` | `price EURUSD` |
+| `prices` | `prices <symbols>` | `prices EURUSD,GBPUSD` |
+| `candles` | `candles <symbol> <period> [<count>]`<br>`candles <symbol> <period> <from> [<to>]` | `candles EURUSD h1 50` |
+| `order` | `order <order-id>` | `order 98765` |
+| `order place-market` | `order place-market <symbol> <side> <volume> [<sl>] [<tp>] [yes]` | `order place-market EURUSD buy 1000 yes` |
+| `order place-limit` | `order place-limit <symbol> <side> <volume> <price> [<sl>] [<tp>] [yes]` | `order place-limit EURUSD buy 1000 1.0800` |
+| `order place-stop` | `order place-stop <symbol> <side> <volume> <stop-price> [<sl>] [<tp>] [yes]` | `order place-stop EURUSD sell 1000 1.0700` |
+| `order place-stop-limit` | `order place-stop-limit <symbol> <side> <volume> <stop-price> <limit-range-pips> [<sl>] [<tp>] [yes]` | `order place-stop-limit EURUSD buy 1000 1.0900 5` |
+| `order modify` | `order modify <order-id> [<price>] [<sl>] [<tp>] [yes]` | `order modify 98765 1.0820` |
+| `order cancel` | `order cancel <order-id> [yes]`<br>`order cancel all [yes]` | `order cancel 98765 yes` |
+| `position` | `position <position-id>` | `position 54321` |
+| `position close` | `position close <position-id> [yes]`<br>`position close all [yes]` | `position close 54321` |
+| `position close-partial` | `position close-partial <position-id> <volume> [yes]` | `position close-partial 54321 500` |
+| `position modify` | `position modify <position-id> <sl> [<tp>] [yes]` | `position modify 54321 1.0750 1.0950` |
+| `deals` | `deals [<symbol>] [<count>]`<br>`deals [<symbol>] <from> <to>` | `deals EURUSD 20` |
+| `orders-history` | `orders-history <count>`<br>`orders-history <from> <to>` | `orders-history 01/06/2025 30/06/2025` |
+| `indicator calculate` | `indicator calculate <name> <symbol> <period> [<params>]` | `indicator calculate rsi EURUSD h1` |
+| `indicator history` | `indicator history <name> <symbol> <period> <count> [<params>]` | `indicator history rsi EURUSD h1 20` |
+| `indicator parameters` | `indicator parameters <name>` | `indicator parameters rsi` |
+| `alert create` | `alert create <symbol> <price> <condition> [yes]` | `alert create EURUSD 1.0900 above` |
+| `alert delete` | `alert delete <alert-id> [yes]`<br>`alert delete all [yes]` | `alert delete 112233` |
+| `create` | `create <kind> <name> [<language>]` | `create cbot MyBot python` |
+| `metadata` | `metadata <algo-file>` | `metadata ./MyBot.algo` |
+| `run` | `run <algo-file> <symbol> <period> [<params>]` | `run ./MyBot.algo EURUSD h1` |
+| `stop` | `stop <instance-id> [yes]`<br>`stop all [yes]` | `stop 3 yes` |
+| `backtest` | `backtest <algo-file> <symbol> <period> <from> <to> [<params>]` | `backtest ./MyBot.algo EURUSD h1 01/06/2025 30/06/2025` |
+| `build` | `build <project-path>` | `build ./MyBot` |
+
+To see the positional forms of the installed version, run `ctrader-cli --commands`.
+
 ## Notes
 
 ### Auth modes reference
@@ -719,6 +781,7 @@ UTC applies to command output and date input as follows:
   - For `candles`, `--to` is the start of that day (00:00 UTC). To include a day, set `--to` to the next day.
   - Without `--from` / `--to`, the interactive `backtest` covers the last 7 days.
 - Backtest `--start` and `--end` (used by `backtest`, `optimize`): `dd/MM/yyyy`, optionally with a 24-hour time as `dd/MM/yyyy HH:mm`, for example `31/12/2026 18:00`, also in UTC.
+- Order expiry (`--expiration`, used by `order place-limit`, `order place-stop`, `order place-stop-limit` and `order modify`): a UTC date and time in `yyyy-MM-ddTHH:mm` or `yyyy-MM-ddTHH:mm:ss` format, for example `2026-12-31T18:00`. A value with `Z` or an offset, such as `2026-12-31T21:00:00+03:00`, is also accepted and converted to UTC.
 
 The one exception is a running cBot (`run`, `backtest`). Its time follows the `TimeZone` set in the cBot, as in cTrader Algo.
 
