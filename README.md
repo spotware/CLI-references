@@ -233,7 +233,7 @@ Fill at the next available price.
 ctrader-cli order place-market --ctid=<cTID> --password=<password> --account=<account-id> -q --symbol=<symbol> --side=<side> --volume=<volume> --sl=<sl> --tp=<tp>
 ```
 
-See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag.
+See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag. See [Notes → Order options](#order-options) for the stop-loss, take-profit, expiry and execution flags.
 
 ### `order place-limit`
 
@@ -246,7 +246,7 @@ Place a limit order at a chosen price.
 ctrader-cli order place-limit --ctid=<cTID> --password=<password> --account=<account-id> -q --symbol=<symbol> --side=<side> --volume=<volume> --price=<price> --sl=<sl> --tp=<tp>
 ```
 
-See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag.
+See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag. See [Notes → Order options](#order-options) for the stop-loss, take-profit, expiry and execution flags.
 
 ### `order place-stop`
 
@@ -259,7 +259,7 @@ Place a stop order that triggers at a chosen price.
 ctrader-cli order place-stop --ctid=<cTID> --password=<password> --account=<account-id> -q --symbol=<symbol> --side=<side> --volume=<volume> --stop-price=<stop-price> --sl=<sl> --tp=<tp>
 ```
 
-See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag.
+See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag. See [Notes → Order options](#order-options) for the stop-loss, take-profit, expiry and execution flags.
 
 ### `order place-stop-limit`
 
@@ -272,7 +272,7 @@ Place a stop-limit order with a slippage allowance once the stop fires.
 ctrader-cli order place-stop-limit --ctid=<cTID> --password=<password> --account=<account-id> -q --symbol=<symbol> --side=<side> --volume=<volume> --stop-price=<stop-price> --limit-range=<limit-range> --sl=<sl> --tp=<tp>
 ```
 
-See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag.
+See [Notes → Volume semantics](#volume-semantics) for the `--volume-type` flag. See [Notes → Order options](#order-options) for the stop-loss, take-profit, expiry and execution flags.
 
 ### `order modify`
 
@@ -291,6 +291,9 @@ ctrader-cli order modify --ctid=<cTID> --password=<password> --account=<account-
 | `--sl` | New stop-loss price. |
 | `--tp` | New take-profit price. |
 | `--limit-range` | New slippage allowance in pips (stop-limit orders only). |
+| `--expiration` | New expiry in UTC, or `none` to remove it. See [Notes → Pending order lifetime](#pending-order-lifetime). |
+
+See [Notes → Order options](#order-options) for the stop-loss, take-profit, expiry and execution flags.
 
 ### `order cancel`
 
@@ -341,6 +344,8 @@ Change the stop loss or take profit of an open position.
 ctrader-cli position modify --ctid=<cTID> --password=<password> --account=<account-id> -q --position=<position-id> --sl=<sl> --tp=<tp>
 ```
 
+See [Notes → Order options](#order-options) for the stop-loss, take-profit, expiry and execution flags.
+
 ### `position close`
 
 Close an open position in full. Pass `--position=<position-id>` to close one, or `all` to close every open position. Pass `yes` to skip confirmation. Inside the interactive shell: `> position close all yes`.
@@ -384,8 +389,16 @@ If a range holds more records than one call returns, split it into shorter range
 
 To see whether the result was cut, check its output:
 
-- `orders-history`: the output has `available` and `returned`. If `available` is bigger than `returned`, there are more orders in the range.
-- `deals`: if `count` is exactly `200`, there may be more trades in the range.
+- With `--from` / `--to`, both commands show `returned` and `available`. If `available` is bigger than `returned`, the output also has `truncated: true` and the following warning:
+
+  ```
+  Showing the last 200 of 374. Use a shorter --from / --to range to see the rest.
+  ```
+
+- Without `--from` / `--to`, there is no warning. `deals` shows `count` and `lookbackDays: 30`. `orders-history` shows `lookbackDays: 30`, and also `available` when there are more orders in the 30 days than it returned.
+- A range with no activity returns an empty list with `available: 0`.
+
+If loading the history fails, for example because the connection drops, the command prints an error and exits with a non-zero code.
 
 ### `deals`
 
@@ -414,6 +427,13 @@ List every completed order in a date range, or the most recent N completed order
 ctrader-cli orders-history --ctid=<cTID> --password=<password> --account=<account-id> -q --from=<date> --to=<date>
 ctrader-cli orders-history --ctid=<cTID> --password=<password> --account=<account-id> -q --count=<count>
 ```
+
+**Order times**, all in UTC. `order <order-id>` shows the same times for an order that is already in the history. For a pending order, the only time it shows is `expiration`, if one is set.
+
+- `openTime`: when the order was created.
+- `closeTime`: when the order was executed. For an expired order, it is the expiry time. It is empty for a cancelled limit, stop or stop-limit order, which was never executed.
+- `lastUpdateTime`: when the order last changed. For a cancelled or expired order, it is when the order ended.
+- `expiration`: the expiry set on the order, if any.
 
 ### `exposure`
 
@@ -691,6 +711,62 @@ Print the interactive shell's full command reference. Equivalent to launching th
 ctrader-cli help
 ```
 
+## Positional forms
+
+Commands also accept their values as positional arguments, without option names. For example, `deals EURUSD 20` returns the last 20 closed trades for EURUSD, and `deals 01/06/2025 30/06/2025` returns the closed trades for June 2025.
+
+Positional forms work both in the interactive shell and on the command line:
+
+- In the interactive shell, a line uses either positional values or options, not both. A line with positional values and an `--option` prints the usage hint instead of running the command.
+- On the command line, put the positional values first, right after the command name, and the options after them:
+
+  ```bash
+  ctrader-cli deals EURUSD 20 --ctid=<cTID> --password=<password> --account=<account-id> -q
+  ```
+
+The positional forms follow these rules:
+
+- Values go in the order shown below. Values in square brackets are optional, but each one requires the values before it. The exception is `deals`, where the symbol can be left out, as in `deals 20`.
+- A trailing `yes` or `y` skips the confirmation prompt.
+- In the interactive shell, a command entered without its values asks for them one by one. On the command line, with or without `-q`, nothing is asked: a missing required value stops the command with an error such as `'symbol' is required`, and a missing optional value takes its default.
+- A list of symbols is separated by commas without spaces, such as `EURUSD,GBPUSD`.
+
+| Command | Positional form | Example |
+|---|---|---|
+| `account` | `account <account-id>` | `account 1234567` |
+| `account switch` | `account switch <account-id>` | `account switch 1234567` |
+| `symbol` | `symbol <symbol>` | `symbol EURUSD` |
+| `sessions` | `sessions <symbol>` | `sessions XAUUSD` |
+| `price` | `price <symbol>` | `price EURUSD` |
+| `prices` | `prices <symbols>` | `prices EURUSD,GBPUSD` |
+| `candles` | `candles <symbol> <period> [<count>]`<br>`candles <symbol> <period> <from> [<to>]` | `candles EURUSD h1 50` |
+| `order` | `order <order-id>` | `order 98765` |
+| `order place-market` | `order place-market <symbol> <side> <volume> [<sl>] [<tp>] [yes]` | `order place-market EURUSD buy 1000 yes` |
+| `order place-limit` | `order place-limit <symbol> <side> <volume> <price> [<sl>] [<tp>] [yes]` | `order place-limit EURUSD buy 1000 1.0800` |
+| `order place-stop` | `order place-stop <symbol> <side> <volume> <stop-price> [<sl>] [<tp>] [yes]` | `order place-stop EURUSD sell 1000 1.0700` |
+| `order place-stop-limit` | `order place-stop-limit <symbol> <side> <volume> <stop-price> <limit-range-pips> [<sl>] [<tp>] [yes]` | `order place-stop-limit EURUSD buy 1000 1.0900 5` |
+| `order modify` | `order modify <order-id> [<price>] [<sl>] [<tp>] [yes]` | `order modify 98765 1.0820` |
+| `order cancel` | `order cancel <order-id> [yes]`<br>`order cancel all [yes]` | `order cancel 98765 yes` |
+| `position` | `position <position-id>` | `position 54321` |
+| `position close` | `position close <position-id> [yes]`<br>`position close all [yes]` | `position close 54321` |
+| `position close-partial` | `position close-partial <position-id> <volume> [yes]` | `position close-partial 54321 500` |
+| `position modify` | `position modify <position-id> <sl> [<tp>] [yes]` | `position modify 54321 1.0750 1.0950` |
+| `deals` | `deals [<symbol>] [<count>]`<br>`deals [<symbol>] <from> <to>` | `deals EURUSD 20` |
+| `orders-history` | `orders-history <count>`<br>`orders-history <from> <to>` | `orders-history 01/06/2025 30/06/2025` |
+| `indicator calculate` | `indicator calculate <name> <symbol> <period> [<params>]` | `indicator calculate rsi EURUSD h1` |
+| `indicator history` | `indicator history <name> <symbol> <period> <count> [<params>]` | `indicator history rsi EURUSD h1 20` |
+| `indicator parameters` | `indicator parameters <name>` | `indicator parameters rsi` |
+| `alert create` | `alert create <symbol> <price> <condition> [yes]` | `alert create EURUSD 1.0900 above` |
+| `alert delete` | `alert delete <alert-id> [yes]`<br>`alert delete all [yes]` | `alert delete 112233` |
+| `create` | `create <kind> <name> [<language>]` | `create cbot MyBot python` |
+| `metadata` | `metadata <algo-file>` | `metadata ./MyBot.algo` |
+| `run` | `run <algo-file> <symbol> <period> [<params>]` | `run ./MyBot.algo EURUSD h1` |
+| `stop` | `stop <instance-id> [yes]`<br>`stop all [yes]` | `stop 3 yes` |
+| `backtest` | `backtest <algo-file> <symbol> <period> <from> <to> [<params>]` | `backtest ./MyBot.algo EURUSD h1 01/06/2025 30/06/2025` |
+| `build` | `build <project-path>` | `build ./MyBot` |
+
+To see the positional forms of the installed version, run `ctrader-cli --commands`.
+
 ## Notes
 
 ### Auth modes reference
@@ -719,6 +795,7 @@ UTC applies to command output and date input as follows:
   - For `candles`, `--to` is the start of that day (00:00 UTC). To include a day, set `--to` to the next day.
   - Without `--from` / `--to`, the interactive `backtest` covers the last 7 days.
 - Backtest `--start` and `--end` (used by `backtest`, `optimize`): `dd/MM/yyyy`, optionally with a 24-hour time as `dd/MM/yyyy HH:mm`, for example `31/12/2026 18:00`, also in UTC.
+- Order expiry (`--expiration`, used by `order place-limit`, `order place-stop`, `order place-stop-limit` and `order modify`): a UTC date and time in `yyyy-MM-ddTHH:mm` or `yyyy-MM-ddTHH:mm:ss` format, for example `2026-12-31T18:00`. A value with `Z` or an offset, such as `2026-12-31T21:00:00+03:00`, is also accepted and converted to UTC. To remove the expiry from a pending order, use `order modify` with `--expiration=none`. The other commands do not accept `none`.
 
 The one exception is a running cBot (`run`, `backtest`). Its time follows the `TimeZone` set in the cBot, as in cTrader Algo.
 
@@ -726,25 +803,60 @@ The one exception is a running cBot (`run`, `backtest`). Its time follows the `T
 
 `--volume` defaults to units of the base currency. Pass `--volume-type=lots` to interpret it as lots.
 
+### Order options
+
+The order and position commands accept the following flags to protect a trade and control its execution. `order place-*` means `order place-market`, `order place-limit`, `order place-stop` and `order place-stop-limit`.
+
+| Flag | Commands | Description |
+|---|---|---|
+| `--sl=<price>` | `order place-*`, `order modify`, `position modify` | Stop-loss price. See [Stop-loss semantics](#stop-loss-semantics). |
+| `--tp=<price>` | `order place-*`, `order modify`, `position modify` | Take-profit price, or several levels as `<price>:<volume>,...,<price>`. See [Take-profit semantics](#take-profit-semantics). |
+| `--trailing[=true\|false]` | `order place-*`, `order modify`, `position modify` | Trailing stop loss. Needs a stop loss. On `order modify` and `position modify`, omitting it keeps the current setting. |
+| `--gsl[=true\|false]` | `order place-*`, `order modify`, `position modify` | Guaranteed stop loss. Needs `--sl` and a symbol that allows a guaranteed stop loss. |
+| `--break-even-trigger=<pips>` | `order place-*`, `order modify`, `position modify` | The profit in whole pips at which the stop loss moves to break-even. `none` removes break-even on `order modify` and `position modify`. |
+| `--break-even-offset=<pips>` | `order place-*`, `order modify`, `position modify` | The pips locked in past the entry price when break-even fires. 0 by default, and less than the trigger. |
+| `--market-range=<pips>` | `order place-market` | The maximum slippage from the current price. |
+| `--limit-range=<pips>` | `order place-stop-limit`, `order modify` | See [Limit-range semantics](#limit-range-semantics). |
+| `--trigger-method=<method>` | `order place-stop`, `order place-stop-limit`, `order modify` | See [Stop-order trigger semantics](#stop-order-trigger-semantics). |
+| `--expiration=<date-time>` | `order place-limit`, `order place-stop`, `order place-stop-limit`, `order modify` | See [Pending order lifetime](#pending-order-lifetime). |
+
+```bash
+ctrader-cli order place-market --ctid=<cTID> --password=<password> --account=<account-id> -q --symbol=EURUSD --side=buy --volume=1000 --sl=1.1050 --tp=1.1400 --trailing --break-even-trigger=20 --break-even-offset=2
+```
+
 ### Take-profit semantics
 
-`--tp` takes a single price, so a position opened through cTrader CLI has one take-profit level and closes in full when price reaches it. `--tp` on `position modify` replaces that level rather than adding another. Positions opened in the cTrader desktop or web applications can carry several take-profit levels, which cTrader CLI cannot create or reproduce. On a position that already carries several take-profit levels, `position modify --tp` replaces all of them with the single new level; omitting `--tp` keeps the existing levels.
+`--tp` takes a single price, or up to five levels as `<price>:<volume>,...,<price>` when the broker enables Advanced Take Profit. Each level closes the volume given after it, in `--volume-type` units. The farthest level takes no volume and closes the rest. If the broker does not enable Advanced Take Profit, the CLI refuses several levels.
+
+```bash
+ctrader-cli order place-market --ctid=<cTID> --password=<password> --account=<account-id> -q --symbol=EURUSD --side=buy --volume=3000 --tp=1.1650:1000,1.1700:1000,1.1750
+```
+
+This order closes 1,000 units at 1.1650, 1,000 at 1.1700 and the rest at 1.1750.
+
+On `order modify` and `position modify`, a single `--tp` price moves the main take-profit level and keeps the other levels. `--tp=0` removes all take-profit levels.
+
+For a market order, the take profit is sent as an absolute price. On a limited risk account, the CLI converts it to pips.
 
 ### Stop-loss semantics
 
-`--sl` takes a single price. A stop loss stays at that price until a later `position modify --sl` moves it, so trailing a stop or bringing it to break-even means issuing each new price explicitly. Trailing stop loss and break-even protection are not part of `--sl` itself.
+`--sl` takes a single price. For a market order, the stop loss is sent as an absolute price. On a limited risk account, the CLI converts it to pips.
+
+- `--trailing` makes the stop loss follow the price.
+- `--gsl` makes the stop loss guaranteed, on symbols that allow it.
+- `--break-even-trigger=<pips>` moves the stop loss to break-even once the trade is in profit by that many whole pips. The trigger ranges from the symbol's minimum stop-loss distance (plus the spread on pending orders), but never less than 10 pips, up to 500000. `--break-even-offset=<pips>` locks in pips past the entry price when break-even fires.
 
 ### Pending order lifetime
 
-A pending order placed with `order place-limit`, `order place-stop` or `order place-stop-limit` stays active until it fills or `order cancel` cancels it.
+A pending order placed with `order place-limit`, `order place-stop` or `order place-stop-limit` stays active until it fills, `order cancel` cancels it or it reaches its expiry. Set the expiry with `--expiration=<date-time>` when you place the order or with `order modify`. The value is in UTC, see [Dates and times](#dates-and-times). `order modify --expiration=none` removes the expiry. The other commands do not accept `none`.
 
 ### Limit-range semantics
 
-`--limit-range` is the slippage allowance, in pips, applied once the stop price of an `order place-stop-limit` order fires. It belongs to stop-limit orders only; `order place-market` takes no range flag.
+`--limit-range` is the slippage allowance, in pips, applied once the stop price of an `order place-stop-limit` order fires. `0` fills at market on trigger. For market orders, `--market-range=<pips>` on `order place-market` sets the maximum slippage from the current price.
 
 ### Stop-order trigger semantics
 
-`order place-stop` and `order place-stop-limit` take their trigger level through `--stop-price`. The trigger method is always Trade (the default); Opposite cannot be chosen.
+`order place-stop` and `order place-stop-limit` take their trigger level through `--stop-price`. `--trigger-method` chooses the price side that triggers the order: `trade` (default), `opposite`, `double-trade` or `double-opposite`. `order modify` also accepts `--trigger-method` and applies it when the order is a stop or stop-limit order.
 
 ### Order and position identification
 
@@ -762,10 +874,10 @@ Orders and positions are referenced by the numeric identifiers passed to `--orde
 | `--version` | Ignored | 0 | Prints the version |
 | `help` | Rejected | 1 | `Missing --ctid in non-interactive mode.` |
 | Misspelled cBot parameter on `run` or `backtest` | Rejected | 1 | `Error: Unknown command line parameters found: <name>` |
-| Any command that uses a trading account (for example `price`, `alerts`, `positions`, `order`) with `-q` | Ignored, no warning | 0 | Normal output |
+| Any command that uses a trading account (for example `price`, `alerts`, `positions`, `order`) with `-q` | Ignored, with a warning | 0 | `Warning: unsupported argument '<name>' for '<command>'; it was ignored.` and the normal output |
 | `--name=value` inside the interactive shell | Rejected | — | Error |
 
-With `-q`, `--expiration`, `--trigger-method`, `--market-range`, `--label` and `--comment` are dropped, and the order is created without that setting.
+With `-q`, `--label` and `--comment` are not supported. The CLI prints a warning and creates the order without them.
 
 ### cBot parameter overrides
 
