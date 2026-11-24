@@ -817,7 +817,7 @@ The order and position commands accept the following flags to protect a trade an
 | `--break-even-offset=<pips>` | `order place-*`, `order modify`, `position modify` | The pips locked in past the entry price when break-even fires. 0 by default, and less than the trigger. |
 | `--market-range=<pips>` | `order place-market` | The maximum slippage from the current price. |
 | `--limit-range=<pips>` | `order place-stop-limit`, `order modify` | See [Limit-range semantics](#limit-range-semantics). |
-| `--trigger-method=<method>` | `order place-stop`, `order place-stop-limit` | See [Stop-order trigger semantics](#stop-order-trigger-semantics). |
+| `--trigger-method=<method>` | `order place-stop`, `order place-stop-limit`, `order modify` | See [Stop-order trigger semantics](#stop-order-trigger-semantics). |
 | `--expiration=<date-time>` | `order place-limit`, `order place-stop`, `order place-stop-limit`, `order modify` | See [Pending order lifetime](#pending-order-lifetime). |
 
 ```bash
@@ -844,7 +844,7 @@ For a market order, the take profit is sent as an absolute price. On a limited r
 
 - `--trailing` makes the stop loss follow the price.
 - `--gsl` makes the stop loss guaranteed, on symbols that allow it.
-- `--break-even-trigger=<pips>` moves the stop loss to break-even once the trade is in profit by that many whole pips. The trigger ranges from the symbol's minimum stop-loss distance (plus the spread on pending orders) to 500000. `--break-even-offset=<pips>` locks in pips past the entry price when break-even fires.
+- `--break-even-trigger=<pips>` moves the stop loss to break-even once the trade is in profit by that many whole pips. The trigger ranges from the symbol's minimum stop-loss distance (plus the spread on pending orders), but never less than 10 pips, up to 500000. `--break-even-offset=<pips>` locks in pips past the entry price when break-even fires.
 
 ### Pending order lifetime
 
@@ -856,7 +856,7 @@ A pending order placed with `order place-limit`, `order place-stop` or `order pl
 
 ### Stop-order trigger semantics
 
-`order place-stop` and `order place-stop-limit` take their trigger level through `--stop-price`. `--trigger-method` chooses the price side that triggers the order: `trade` (default), `opposite`, `double-trade` or `double-opposite`.
+`order place-stop` and `order place-stop-limit` take their trigger level through `--stop-price`. `--trigger-method` chooses the price side that triggers the order: `trade` (default), `opposite`, `double-trade` or `double-opposite`. `order modify` also accepts `--trigger-method` and applies it when the order is a stop or stop-limit order.
 
 ### Order and position identification
 
@@ -874,7 +874,7 @@ Orders and positions are referenced by the numeric identifiers passed to `--orde
 | `--version` | Ignored | 0 | Prints the version |
 | `help` | Rejected | 1 | `Missing --ctid in non-interactive mode.` |
 | Misspelled cBot parameter on `run` or `backtest` | Rejected | 1 | `Error: Unknown command line parameters found: <name>` |
-| Any command that uses a trading account (for example `price`, `alerts`, `positions`, `order`) with `-q` | Ignored, with a warning | 0 | A warning and the normal output |
+| Any command that uses a trading account (for example `price`, `alerts`, `positions`, `order`) with `-q` | Ignored, with a warning | 0 | `Warning: unsupported argument '<name>' for '<command>'; it was ignored.` and the normal output |
 | `--name=value` inside the interactive shell | Rejected | — | Error |
 
 With `-q`, `--label` and `--comment` are not supported. The CLI prints a warning and creates the order without them.
