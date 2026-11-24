@@ -723,7 +723,7 @@ The positional forms follow these rules:
 
 - Values go in the order shown below. Values in square brackets are optional, but each one requires the values before it. The exception is `deals`, where the symbol can be left out, as in `deals 20`.
 - A trailing `yes` or `y` skips the confirmation prompt.
-- A command entered without its values asks for them one by one.
+- In the interactive shell, a command entered without its values asks for them one by one. On the command line with `-q`, nothing is asked: a missing required value stops the command with an error such as `'symbol' is required`, and a missing optional value takes its default.
 - A list of symbols is separated by commas without spaces, such as `EURUSD,GBPUSD`.
 
 | Command | Positional form | Example |
