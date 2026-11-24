@@ -390,7 +390,7 @@ To see whether the result was cut, check its output:
   Showing the last 200 of 374. Use a shorter --from / --to range to see the rest.
   ```
 
-- Without `--from` / `--to`, both commands show `lookbackDays: 30`. `orders-history` also shows `available` when there are more orders in the 30 days than it returned.
+- Without `--from` / `--to`, there is no warning. `deals` shows `count` and `lookbackDays: 30`. `orders-history` shows `lookbackDays: 30`, and also `available` when there are more orders in the 30 days than it returned.
 - A range with no activity returns an empty list with `available: 0`.
 
 If loading the history fails, for example because the connection drops, the command prints an error and exits with a non-zero code.
@@ -423,12 +423,12 @@ ctrader-cli orders-history --ctid=<cTID> --password=<password> --account=<accoun
 ctrader-cli orders-history --ctid=<cTID> --password=<password> --account=<account-id> -q --count=<count>
 ```
 
-**Order times** (also shown by `order <order-id>`), all in UTC:
+**Order times**, all in UTC. `order <order-id>` shows the same times for an order that is already in the history. For a pending order, the only time it shows is `expiration`, if one is set.
 
 - `openTime`: when the order was created.
-- `closeTime`: when the order was executed. For an expired order, it is the expiry time. It is empty for a cancelled limit, stop or stop-limit order, which was never executed, and for a pending order.
-- `expiration`: the expiry set on the order, if any.
+- `closeTime`: when the order was executed. For an expired order, it is the expiry time. It is empty for a cancelled limit, stop or stop-limit order, which was never executed.
 - `lastUpdateTime`: when the order last changed. For a cancelled or expired order, it is when the order ended.
+- `expiration`: the expiry set on the order, if any.
 
 ### `exposure`
 
@@ -708,12 +708,21 @@ ctrader-cli help
 
 ## Positional forms
 
-Inside the interactive shell, commands also accept their values as positional arguments, without option names. For example, `deals EURUSD 20` returns the last 20 closed trades for EURUSD, and `deals 01/06/2025 30/06/2025` returns the closed trades for June 2025.
+Commands also accept their values as positional arguments, without option names. For example, `deals EURUSD 20` returns the last 20 closed trades for EURUSD, and `deals 01/06/2025 30/06/2025` returns the closed trades for June 2025.
+
+Positional forms work both in the interactive shell and on the command line:
+
+- In the interactive shell, a line uses either positional values or options, not both. A line with positional values and an `--option` prints the usage hint instead of running the command.
+- On the command line, put the positional values first, right after the command name, and the options after them:
+
+  ```bash
+  ctrader-cli deals EURUSD 20 --ctid=<cTID> --password=<password> --account=<account-id> -q
+  ```
 
 The positional forms follow these rules:
 
-- Values go in the order shown below. Values in square brackets are optional, but each one requires the values before it.
-- A trailing `yes` skips the confirmation prompt.
+- Values go in the order shown below. Values in square brackets are optional, but each one requires the values before it. The exception is `deals`, where the symbol can be left out, as in `deals 20`.
+- A trailing `yes` or `y` skips the confirmation prompt.
 - A command entered without its values asks for them one by one.
 - A list of symbols is separated by commas without spaces, such as `EURUSD,GBPUSD`.
 
@@ -781,7 +790,7 @@ UTC applies to command output and date input as follows:
   - For `candles`, `--to` is the start of that day (00:00 UTC). To include a day, set `--to` to the next day.
   - Without `--from` / `--to`, the interactive `backtest` covers the last 7 days.
 - Backtest `--start` and `--end` (used by `backtest`, `optimize`): `dd/MM/yyyy`, optionally with a 24-hour time as `dd/MM/yyyy HH:mm`, for example `31/12/2026 18:00`, also in UTC.
-- Order expiry (`--expiration`, used by `order place-limit`, `order place-stop`, `order place-stop-limit` and `order modify`): a UTC date and time in `yyyy-MM-ddTHH:mm` or `yyyy-MM-ddTHH:mm:ss` format, for example `2026-12-31T18:00`. A value with `Z` or an offset, such as `2026-12-31T21:00:00+03:00`, is also accepted and converted to UTC.
+- Order expiry (`--expiration`, used by `order place-limit`, `order place-stop`, `order place-stop-limit` and `order modify`): a UTC date and time in `yyyy-MM-ddTHH:mm` or `yyyy-MM-ddTHH:mm:ss` format, for example `2026-12-31T18:00`. A value with `Z` or an offset, such as `2026-12-31T21:00:00+03:00`, is also accepted and converted to UTC. To remove the expiry from a pending order, use `order modify` with `--expiration=none`. The other commands do not accept `none`.
 
 The one exception is a running cBot (`run`, `backtest`). Its time follows the `TimeZone` set in the cBot, as in cTrader Algo.
 
